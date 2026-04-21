@@ -157,3 +157,15 @@ UPDATE pawclinic.users
 SET password_hash = '$2b$10$B00Zk/1Uio3Ew4gR9r8/n.rM/lQ1K52Z1lG7r6oX9R0sH7yX/g77K' 
 WHERE email = 'admin@pawclinic.com' OR email = 'admin@clinic.com';
 
+CREATE TABLE invoices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  owner_id INT NOT NULL,
+  invoice_number VARCHAR(50) UNIQUE NOT NULL,
+  date DATE NOT NULL,
+  due_date DATE NOT NULL,
+  items JSON NOT NULL,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  status ENUM('pending', 'paid', 'overdue') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
+);

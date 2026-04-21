@@ -148,6 +148,19 @@ const createAppointment = asyncHandler(async (req, res) => {
     [result.insertId]
   );
 
+  const newAppointment = rows[0];
+
+  // 🚀 Fire off the email asynchronously (don't use 'await' here so the user doesn't have to wait for the email to send before the UI updates)
+  if (newAppointment.owner_email) {
+    sendAppointmentConfirmation(
+      newAppointment.owner_email,
+      newAppointment.owner_name,
+      newAppointment.pet_name,
+      newAppointment.date,
+      newAppointment.time
+    );
+  }
+
   res.status(201).json({
     success: true,
     data: rows[0]

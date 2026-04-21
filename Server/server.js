@@ -12,6 +12,8 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const ownersRoutes = require('./routes/ownersRoutes');
 const petsRoutes = require('./routes/petsRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
+
 
 // Initialize Express app
 const app = express();
@@ -24,17 +26,15 @@ const app = express();
 app.use(helmet());
 
 // Enable CORS with configuration
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    credentials: true
-  })
-);
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true
+}));
 
 // Rate limiting to prevent brute force attacks
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 requests per window
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 100000, // 15 minutes default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000000, // 100 requests per window
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later'
@@ -72,6 +72,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/owners', ownersRoutes);
 app.use('/api/pets', petsRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
