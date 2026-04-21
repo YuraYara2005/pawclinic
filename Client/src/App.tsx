@@ -13,8 +13,8 @@ import StaffPage from "./pages/StaffPage";
 import { SignInForm } from "./SignInForm";
 
 export default function App() {
-  // 🔐 Check for the specific verification token
-  const isAuthenticated = localStorage.getItem("clinic_auth_token") === "verified_admin_session";
+  // Check for the specific verification token
+    const isAuthenticated = !!localStorage.getItem("clinic_auth_token");
 
   return (
     <div className="min-h-screen bg-mint-50">

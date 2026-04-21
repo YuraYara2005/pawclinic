@@ -1,4 +1,5 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import type { FormEvent } from "react";
 import { toast } from "sonner";
 
 export function SignInForm() {
@@ -6,31 +7,40 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 🔐 Define your Master Credentials here
-  const MASTER_EMAIL = "admin@clinic.com";
-  const MASTER_PASSWORD = "admin123";
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Simulate network delay to make it look like a real database check
-    setTimeout(() => {
-      if (email === MASTER_EMAIL && password === MASTER_PASSWORD) {
-        // ✅ Verification Passed
-        localStorage.setItem("clinic_auth_token", "verified_admin_session");
-        toast.success("Welcome back, Dr. Yara!");
+    try {
+      // 🔒 SECURE: Send credentials to your Node.js backend.
+      // React never knows the real password, it just asks Node to verify it.
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await res.json();
+
+      if (data.success) {
+        // 🔒 SECURE: Save the cryptographic JWT token to the browser.
+        const realToken = data.data?.token || data.token; 
+        localStorage.setItem("clinic_auth_token", realToken);
+        
+        toast.success("Login successful!");
         window.location.reload(); 
       } else {
-        // ❌ Verification Failed
-        toast.error("Invalid email or password. Please try again.");
+        toast.error(data.message || "Invalid credentials. Please try again.");
         setSubmitting(false);
       }
-    }, 800);
+    } catch (err) {
+      toast.error("Could not connect to the secure server.");
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full animate-in fade-in duration-500">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -61,7 +71,7 @@ export function SignInForm() {
           type="submit" 
           disabled={submitting}
         >
-          {submitting ? "Verifying Credentials..." : "Sign In"}
+          {submitting ? "Authenticating securely..." : "Sign In"}
         </button>
       </form>
     </div>
