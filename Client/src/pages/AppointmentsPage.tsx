@@ -62,6 +62,7 @@ export default function AppointmentsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDeletingId, setIsDeletingId] = useState<string | number | null>(null);
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editing, setEditing] = useState<Appointment | null>(null);
@@ -79,10 +80,11 @@ export default function AppointmentsPage() {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
 
+      // 🚨 FIX: Removed rogue quotes from the URLs
       const [apptRes, petsRes, ownersRes] = await Promise.all([
-        fetch("`${import.meta.env.VITE_API_URL}/api/appointments", { headers }),
-        fetch("`${import.meta.env.VITE_API_URL}/api/pets", { headers }),
-        fetch("`${import.meta.env.VITE_API_URL}/api/owners", { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/pets`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/owners`, { headers })
       ]);
 
       const apptData = await apptRes.json();
@@ -102,7 +104,7 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   const petMap = Object.fromEntries(pets.map((p) => [p.id || p._id, p]));
   const ownerMap = Object.fromEntries(owners.map((o) => [o.id || o._id, o]));
@@ -134,7 +136,6 @@ export default function AppointmentsPage() {
     let dateStr = "";
     let timeStr = "";
 
-    // 🚨 THE FIX: Let Javascript translate the UTC string to Local Time
     if (appt.date) {
       const d = new Date(appt.date);
       dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -180,7 +181,8 @@ export default function AppointmentsPage() {
     };
 
     const targetId = editing?.id || editing?._id;
-    const url = editing ? `${import.meta.env.VITE_API_URL}/api/appointments/${targetId}` : "`${import.meta.env.VITE_API_URL}/api/appointments";
+    // 🚨 FIX: Removed rogue quotes here too
+    const url = editing ? `${import.meta.env.VITE_API_URL}/api/appointments/${targetId}` : `${import.meta.env.VITE_API_URL}/api/appointments`;
     const method = editing ? "PUT" : "POST";
 
     try {
@@ -245,6 +247,7 @@ export default function AppointmentsPage() {
     if (!id) return;
     if (!window.confirm("Are you sure you want to delete this appointment?")) return;
     
+    setIsDeletingId(id);
     try { 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments/${id}`, {
         method: "DELETE",
@@ -254,12 +257,14 @@ export default function AppointmentsPage() {
       
       if (data.success) {
         toast.success("Appointment deleted"); 
-        setAppointments(appointments.filter(a => (a.id || a._id) !== id));
+        fetchData();
       } else {
         toast.error(data.message || "Failed to delete");
       }
     } catch (err) { 
       toast.error("Network error"); 
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -293,10 +298,24 @@ export default function AppointmentsPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {isLoading ? (
-           <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4" />
-             <p className="font-medium">Syncing with database...</p>
-           </div>
+          // 🚀 ENTERPRISE SKELETON LOADER
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-4 animate-pulse items-center border-b border-gray-50 pb-4">
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                </div>
+                <div className="flex-1"><div className="h-4 bg-gray-200 rounded w-3/4"></div></div>
+                <div className="flex-1"><div className="h-8 bg-gray-200 rounded-lg w-28"></div></div>
+                <div className="w-16"><div className="h-4 bg-gray-200 rounded ml-auto w-10"></div></div>
+              </div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-3">📅</div>
@@ -329,7 +348,6 @@ export default function AppointmentsPage() {
                         <span className="text-xs text-gray-500">Owner: {owner?.name || "—"}</span>
                       </td>
                       <td className="px-6 py-4">
-                        {/* 🚨 THE FIX: Display local date securely */}
                         <span className="font-medium text-gray-800 block">
                           {appt.date ? new Date(appt.date).toLocaleDateString() : "No Date"}
                         </span>
@@ -344,7 +362,7 @@ export default function AppointmentsPage() {
                         <select
                           value={appt.status || "scheduled"}
                           onChange={(e) => handleStatusChange(targetId, e.target.value)}
-                          className={`text-xs border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium capitalize
+                          className={`text-xs border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium capitalize cursor-pointer
                             ${appt.status === 'scheduled' || !appt.status ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
                             ${appt.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : ''}
                             ${appt.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' : ''}
@@ -357,7 +375,9 @@ export default function AppointmentsPage() {
                       <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => openEdit(appt)} className="px-3 py-1.5 text-xs bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition font-medium">Edit</button>
-                          <button onClick={() => handleDelete(targetId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">Delete</button>
+                          <button disabled={isDeletingId === targetId} onClick={() => handleDelete(targetId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium disabled:opacity-50">
+                            {isDeletingId === targetId ? "..." : "Delete"}
+                          </button>
                         </div>
                       </td>
                     </tr>

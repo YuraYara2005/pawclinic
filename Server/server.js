@@ -33,7 +33,7 @@ app.use(cors({
 
 // Rate limiting to prevent brute force attacks
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 100000, // 15 minutes default
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000000000, // 15 minutes default
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000000, // 100 requests per window
   message: {
     success: false,
