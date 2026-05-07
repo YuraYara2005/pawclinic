@@ -1,16 +1,15 @@
-import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 export default function ProfileSetup() {
-  const createProfile = useMutation(api.userProfiles.createProfile);
-
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Grab the token just like we do in the other pages
+  const token = localStorage.getItem("clinic_auth_token");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -20,15 +19,31 @@ export default function ProfileSetup() {
     setLoading(true);
 
     try {
-      await createProfile({
+      // Replaced Convex with your new Node.js backend URL
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/profile`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
           name,
           phone: phone || undefined,
+        }),
       });
 
-      toast.success("Profile created successfully!");
+      const data = await response.json();
+
+      if (response.ok && data.success !== false) {
+        toast.success("Profile created successfully!");
+        // Optional: Redirect the user to the dashboard after creating the profile
+        // window.location.href = "/"; 
+      } else {
+        toast.error(data.message || "Failed to create profile");
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create profile");
+      toast.error("Network error: Failed to reach the server");
     } finally {
       setLoading(false);
     }
@@ -54,6 +69,7 @@ export default function ProfileSetup() {
               Full Name
             </label>
             <input
+              required
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -67,6 +83,7 @@ export default function ProfileSetup() {
               Phone (optional)
             </label>
             <input
+              type="tel"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
