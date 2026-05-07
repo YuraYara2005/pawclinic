@@ -51,12 +51,11 @@ const emptyForm: PetFormData = {
 // 2. MAIN COMPONENT
 // ==========================================
 export default function PetsPage() {
-  // Data State
   const [pets, setPets] = useState<Pet[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDeletingId, setIsDeletingId] = useState<string | number | null>(null);
 
-  // UI State
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editing, setEditing] = useState<Pet | null>(null);
   const [form, setForm] = useState<PetFormData>(emptyForm);
@@ -73,10 +72,10 @@ export default function PetsPage() {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch Pets and Owners simultaneously
+      // 🚨 FIX: Removed the rogue quotes around the URLs
       const [petsRes, ownersRes] = await Promise.all([
-        fetch("http://localhost:5000/api/pets", { headers }),
-        fetch("http://localhost:5000/api/owners", { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/pets`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/owners`, { headers })
       ]);
 
       const petsData = await petsRes.json();
@@ -94,7 +93,7 @@ export default function PetsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   // Fast lookups
   const ownerMap = Object.fromEntries(owners.map((o) => [o.id || o._id, o]));
@@ -150,7 +149,8 @@ export default function PetsPage() {
     };
 
     const targetId = editing?.id || editing?._id;
-    const url = editing ? `http://localhost:5000/api/pets/${targetId}` : "http://localhost:5000/api/pets";
+    // 🚨 FIX: Removed rogue quotes here too
+    const url = editing ? `${import.meta.env.VITE_API_URL}/api/pets/${targetId}` : `${import.meta.env.VITE_API_URL}/api/pets`;
     const method = editing ? "PUT" : "POST";
 
     try {
@@ -182,8 +182,9 @@ export default function PetsPage() {
     if (!id) return;
     if (!window.confirm("Are you sure you want to delete this pet?")) return;
     
+    setIsDeletingId(id);
     try { 
-      const res = await fetch(`http://localhost:5000/api/pets/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -191,12 +192,14 @@ export default function PetsPage() {
       const data = await res.json();
       if (data.success) {
         toast.success("Pet deleted"); 
-        setPets(pets.filter(p => (p.id || p._id) !== id));
+        fetchData();
       } else {
         toast.error(data.message || "Failed to delete");
       }
     } catch (err) { 
       toast.error("Network error"); 
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -210,7 +213,7 @@ export default function PetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Patients 🐾</h1>
-          <p className="text-gray-500 mt-1">{isLoading ? "Loading..." : `${pets.length} registered pets`}</p>
+          <p className="text-gray-500 mt-1">{isLoading ? "Syncing files..." : `${pets.length} registered pets`}</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all shadow-sm active:scale-95">
           + Add Pet
@@ -233,10 +236,24 @@ export default function PetsPage() {
       {/* Pet Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4" />
-            <p className="font-medium">Fetching furry friends...</p>
-          </div>
+          // 🚀 ENTERPRISE CARD SKELETON LOADER
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-gray-200"></div>
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-5 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              </div>
+              <div className="space-y-3 bg-gray-50 p-4 rounded-xl">
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+                <div className="h-3 bg-gray-200 rounded w-full pt-2 mt-2 border-t border-gray-200/60"></div>
+              </div>
+            </div>
+          ))
         ) : filtered.length === 0 ? (
           <div className="col-span-full text-center py-16 text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
             <div className="text-5xl mb-3">🐾</div>
@@ -244,12 +261,10 @@ export default function PetsPage() {
           </div>
         ) : filtered.map((pet) => {
           const targetId = pet.id || pet._id;
-          
-          // 🚨 THE FIX IS HERE: Safely extract the owner using either ID format
           const owner = ownerMap[String(pet.ownerId || pet.owner_id)];
 
           return (
-            <div key={targetId} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow group">
+            <div key={targetId} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow group flex flex-col">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl shadow-sm">
@@ -262,11 +277,13 @@ export default function PetsPage() {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => openEdit(pet)} className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg transition" title="Edit">✏️</button>
-                  <button onClick={() => handleDelete(targetId)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">🗑️</button>
+                  <button disabled={isDeletingId === targetId} onClick={() => handleDelete(targetId)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50" title="Delete">
+                    {isDeletingId === targetId ? "⏳" : "🗑️"}
+                  </button>
                 </div>
               </div>
               
-              <div className="space-y-2 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+              <div className="space-y-2 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex-1">
                 {pet.age && <div className="flex justify-between"><span className="text-gray-500">Age</span><span className="font-medium text-gray-900">{pet.age} yrs</span></div>}
                 {pet.weight && <div className="flex justify-between"><span className="text-gray-500">Weight</span><span className="font-medium text-gray-900">{pet.weight} kg</span></div>}
                 {pet.gender && <div className="flex justify-between"><span className="text-gray-500">Gender</span><span className="font-medium text-gray-900 capitalize">{pet.gender}</span></div>}

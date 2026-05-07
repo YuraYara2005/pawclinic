@@ -1,23 +1,26 @@
 import React, { useState, useMemo, useEffect } from "react";
-import type {FormEvent} from "react";
+import type { FormEvent } from "react";
 import { toast } from "sonner";
-import Modal from "../components/Modal"; // Assumes you have this component
+import Modal from "../components/Modal"; 
 
 // ==========================================
 // 1. TYPESCRIPT INTERFACES
 // ==========================================
 export interface InventoryItem {
-  id?: number; // MySQL uses 'id'
-  _id?: string | number; // Fallback for old Convex data
+  id?: number; 
+  _id?: string | number; 
   name: string;
   category: string;
   quantity: number | string;
   unit: string;
-  lowStockThreshold: number | string;
+  lowStockThreshold?: number | string;
+  low_stock_threshold?: number | string;
   unitPrice: number | string;
+  unit_price?: number | string;
   supplier?: string;
   description?: string;
   expiryDate?: string;
+  expiry_date?: string;
 }
 
 const CATEGORIES = ["all", "medications", "vaccines", "supplies", "medical supplies", "food", "equipment"];
@@ -38,33 +41,29 @@ const emptyForm: InventoryItem = {
 // 2. MAIN COMPONENT
 // ==========================================
 export default function InventoryPage() {
-  // Data State
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDeletingId, setIsDeletingId] = useState<string | number | null>(null);
   
-  // UI State
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<InventoryItem>(emptyForm);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
-  // Filter & Pagination State
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 8;
 
-  // Helper to get Auth Token
-  const token = localStorage.getItem("clinic_auth_token"); // Wait, Postman uses 'token', ensure you save it this way in login!
-  // If your token is stored differently, adjust the key above.
+  const token = localStorage.getItem("clinic_auth_token");
 
   // ==========================================
-  // 3. API FETCH LOGIC (Connected to MySQL!)
+  // 3. API FETCH LOGIC
   // ==========================================
   const fetchInventory = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("http://localhost:5000/api/inventory", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/inventory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -78,10 +77,9 @@ export default function InventoryPage() {
     }
   };
 
-  // Run once when the page loads
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [token]);
 
   // ==========================================
   // 4. ACTION HANDLERS
@@ -94,7 +92,12 @@ export default function InventoryPage() {
   
   const openEdit = (item: InventoryItem) => {
     setEditing(item);
-    setForm({ ...item });
+    setForm({ 
+      ...item, 
+      lowStockThreshold: item.lowStockThreshold ?? item.low_stock_threshold,
+      unitPrice: item.unitPrice ?? item.unit_price,
+      expiryDate: item.expiryDate ?? item.expiry_date
+    });
     setShowModal(true);
   };
 
@@ -106,21 +109,21 @@ export default function InventoryPage() {
 
     setIsSaving(true);
     
-    // Format payload for MySQL
+    // 🚨 THE FIX: Translating the React state into the exact MySQL snake_case format your backend demands
     const payload = {
       name: form.name,
       category: form.category,
       unit: form.unit,
       quantity: Number(form.quantity),
-      lowStockThreshold: Number(form.lowStockThreshold),
-      unitPrice: Number(form.unitPrice),
+      low_stock_threshold: Number(form.lowStockThreshold), // Translated!
+      unit_price: Number(form.unitPrice),                  // Translated!
       supplier: form.supplier || undefined,
       description: form.description || undefined,
-      expiryDate: form.expiryDate || undefined,
+      expiry_date: form.expiryDate || undefined,           // Translated!
     };
 
     const itemId = editing?.id || editing?._id;
-    const url = editing ? `http://localhost:5000/api/inventory/${itemId}` : "http://localhost:5000/api/inventory";
+    const url = editing ? `${import.meta.env.VITE_API_URL}/api/inventory/${itemId}` : `${import.meta.env.VITE_API_URL}/api/inventory`;
     const method = editing ? "PUT" : "POST";
 
     try {
@@ -134,10 +137,9 @@ export default function InventoryPage() {
       });
       
       const data = await res.json();
-      
       if (data.success) {
         toast.success(`Item ${editing ? "updated" : "added"} successfully!`);
-        fetchInventory(); // Refresh the table
+        fetchInventory(); 
         setShowModal(false);
       } else {
         toast.error(data.message || "Failed to save item");
@@ -153,8 +155,9 @@ export default function InventoryPage() {
     if (!id) return;
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     
+    setIsDeletingId(id);
     try { 
-      const res = await fetch(`http://localhost:5000/api/inventory/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/inventory/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -162,12 +165,14 @@ export default function InventoryPage() {
       const data = await res.json();
       if (data.success) {
         toast.success("Item deleted"); 
-        fetchInventory(); // Refresh the table
+        fetchInventory(); 
       } else {
         toast.error(data.message || "Failed to delete item");
       }
     } catch (err: any) { 
       toast.error("Network error."); 
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -178,10 +183,7 @@ export default function InventoryPage() {
     return inventory.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             (item.supplier && item.supplier.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      // Handle slight category mismatches between frontend and backend
       const matchesCategory = filterCategory === "all" || item.category.toLowerCase().includes(filterCategory.toLowerCase());
-      
       return matchesSearch && matchesCategory;
     });
   }, [inventory, searchQuery, filterCategory]);
@@ -189,7 +191,6 @@ export default function InventoryPage() {
   const totalPages = Math.ceil(filteredInventory.length / itemsPerPage) || 1;
   const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Reset to page 1 when searching/filtering
   useEffect(() => { setCurrentPage(1); }, [searchQuery, filterCategory]);
 
   // ==========================================
@@ -200,7 +201,7 @@ export default function InventoryPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Inventory 📦</h1>
-          <p className="text-gray-500 mt-1">{isLoading ? "Loading items..." : `${inventory.length} total items in stock`}</p>
+          <p className="text-gray-500 mt-1">{isLoading ? "Syncing catalog..." : `${inventory.length} total items in stock`}</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all shadow-sm whitespace-nowrap active:scale-95">
           + Add New Item
@@ -232,9 +233,15 @@ export default function InventoryPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {isLoading ? (
-          <div className="text-center py-20 text-gray-400">
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-             <p className="font-medium">Connecting to Database...</p>
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-4 animate-pulse">
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            ))}
           </div>
         ) : paginatedInventory.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
@@ -256,9 +263,10 @@ export default function InventoryPage() {
                 <tbody className="divide-y divide-gray-50">
                   {paginatedInventory.map((item) => {
                     const stock = Number(item.quantity);
-                    const threshold = Number(item.lowStockThreshold);
+                    const threshold = Number(item.lowStockThreshold ?? item.low_stock_threshold ?? 0);
                     const isLowStock = stock <= threshold;
-                    const itemId = item.id || item._id; // Handle both ID formats
+                    const itemId = item.id || item._id; 
+                    const displayPrice = Number(item.unitPrice ?? item.unit_price ?? 0).toFixed(2);
 
                     return (
                       <tr key={itemId} className="hover:bg-gray-50/50 transition-colors group">
@@ -272,19 +280,21 @@ export default function InventoryPage() {
                             {item.quantity}
                           </span>
                           <span className="text-gray-500 ml-1">{item.unit}</span>
-                          <p className="text-xs text-gray-400 mt-0.5">Min: {item.lowStockThreshold}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Min: {threshold}</p>
                         </td>
                         <td className="px-5 py-4 text-sm font-medium text-gray-700">
-                          ${Number(item.unitPrice).toFixed(2)}
+                          ${displayPrice}
                         </td>
                         <td className="px-5 py-4 text-sm text-gray-600">
                           {item.supplier || "—"}
-                          {item.expiryDate && <p className="text-xs text-orange-500 mt-0.5">Exp: {new Date(item.expiryDate).toLocaleDateString()}</p>}
+                          {(item.expiryDate || item.expiry_date) && <p className="text-xs text-orange-500 mt-0.5">Exp: {new Date((item.expiryDate || item.expiry_date) as string).toLocaleDateString()}</p>}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => openEdit(item)} className="px-3 py-1.5 text-xs bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition font-medium">Edit</button>
-                            <button onClick={() => handleDelete(itemId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">Delete</button>
+                            <button disabled={isDeletingId === itemId} onClick={() => handleDelete(itemId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium disabled:opacity-50">
+                              {isDeletingId === itemId ? "..." : "Delete"}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -294,11 +304,13 @@ export default function InventoryPage() {
               </table>
             </div>
             
-            {/* 📱 MOBILE VIEW (Included for responsiveness) */}
+            {/* 📱 MOBILE VIEW */}
             <div className="block md:hidden divide-y divide-gray-100">
               {paginatedInventory.map((item) => {
-                const isLowStock = Number(item.quantity) <= Number(item.lowStockThreshold);
+                const threshold = Number(item.lowStockThreshold ?? item.low_stock_threshold ?? 0);
+                const isLowStock = Number(item.quantity) <= threshold;
                 const itemId = item.id || item._id;
+                const displayPrice = Number(item.unitPrice ?? item.unit_price ?? 0).toFixed(2);
                 
                 return (
                   <div key={itemId} className="p-4 hover:bg-gray-50 transition">
@@ -318,12 +330,14 @@ export default function InventoryPage() {
                       </div>
                       <div>
                         <span className="block text-xs text-gray-400">Price</span>
-                        <span className="font-semibold">${Number(item.unitPrice).toFixed(2)}</span>
+                        <span className="font-semibold">${displayPrice}</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(item)} className="flex-1 py-2 text-sm bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 font-medium">Edit</button>
-                      <button onClick={() => handleDelete(itemId)} className="flex-1 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium">Delete</button>
+                      <button disabled={isDeletingId === itemId} onClick={() => handleDelete(itemId)} className="flex-1 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium disabled:opacity-50">
+                        {isDeletingId === itemId ? "Deleting..." : "Delete"}
+                      </button>
                     </div>
                   </div>
                 );
@@ -334,7 +348,7 @@ export default function InventoryPage() {
       </div>
 
       {/* 📄 Pagination */}
-      {totalPages > 1 && (
+      {totalPages > 1 && !isLoading && (
         <div className="flex items-center justify-between mt-6 px-2">
           <p className="text-sm text-gray-500">
             Showing <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-gray-900">{Math.min(currentPage * itemsPerPage, filteredInventory.length)}</span> of <span className="font-medium text-gray-900">{filteredInventory.length}</span> results

@@ -90,10 +90,10 @@ export default function BillingPage() {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
 
-      // We expect the backend to eventually have an /api/invoices route
+      // 🚨 FIX: Removed rogue quotes from the URLs
       const [invRes, ownersRes] = await Promise.all([
-        fetch("http://localhost:5000/api/invoices", { headers }).catch(() => ({ ok: false, json: () => ({ success: false, data: [] }) })),
-        fetch("http://localhost:5000/api/owners", { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/invoices`, { headers }).catch(() => ({ ok: false, json: () => ({ success: false, data: [] }) })),
+        fetch(`${import.meta.env.VITE_API_URL}/api/owners`, { headers })
       ]);
 
       const invData = await (invRes as any).json();
@@ -111,7 +111,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   const ownerMap = Object.fromEntries(owners.map((o) => [o.id || o._id, o]));
 
@@ -181,7 +181,8 @@ export default function BillingPage() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/api/invoices", {
+      // 🚨 FIX: Removed rogue quotes from the POST URL
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/invoices`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -205,7 +206,7 @@ export default function BillingPage() {
   const handleStatusChange = async (id: string | number | undefined, newStatus: string) => {
     if (!id) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/invoices/${id}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/invoices/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus })
@@ -284,12 +285,23 @@ export default function BillingPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-400 font-medium">
-                    <div className="flex justify-center mb-3"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
-                    Fetching ledger data...
-                  </td>
-                </tr>
+                // 🚀 ENTERPRISE LEDGER SKELETON LOADER
+                [...Array(5)].map((_, i) => (
+                  <tr key={i} className="animate-pulse border-b border-slate-50">
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-full mb-2"></div>
+                      <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+                    </td>
+                    <td className="px-6 py-4"><div className="h-5 bg-slate-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded-lg w-24"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-1/3 ml-auto"></div></td>
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-16 text-slate-400 font-medium">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import StatCard from "../components/StatCard";
 import Badge from "../components/Badge";
 import { toast } from "sonner";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"; // 🚨 NEW LIBRARY
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 // ==========================================
 // 1. TYPESCRIPT INTERFACES
@@ -33,7 +33,8 @@ interface InventoryItem {
   _id?: string | number;
   name: string;
   quantity: number;
-  lowStockThreshold: number;
+  lowStockThreshold?: number;     // CamelCase
+  low_stock_threshold?: number;   // MySQL Snake_Case
   unit: string;
   category: string;
 }
@@ -70,11 +71,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         setIsLoading(true);
         const headers = { Authorization: `Bearer ${token}` };
 
+        // 🚨 FIX: Removed the rogue double quotes here
         const [apptRes, petsRes, ownersRes, invRes] = await Promise.all([
-          fetch("http://localhost:5000/api/appointments", { headers }),
-          fetch("http://localhost:5000/api/pets", { headers }),
-          fetch("http://localhost:5000/api/owners", { headers }),
-          fetch("http://localhost:5000/api/inventory", { headers })
+          fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/pets`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/owners`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/inventory`, { headers })
         ]);
 
         const apptData = await apptRes.json();
@@ -108,9 +110,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     return appointments.filter((a) => a.date && getLocalYYYYMMDD(a.date) === todayStr);
   }, [appointments, todayStr]);
 
-  const lowStockItems = useMemo(() => 
-    inventory.filter((item) => Number(item.quantity) <= Number(item.lowStockThreshold)), 
-  [inventory]);
+  // 🚨 FIX: Checking both camelCase and snake_case for the threshold
+  const lowStockItems = useMemo(() => {
+    return inventory.filter((item) => {
+      const threshold = item.lowStockThreshold ?? item.low_stock_threshold ?? 0;
+      return Number(item.quantity) <= Number(threshold);
+    });
+  }, [inventory]);
 
   const simulatedRevenue = 0; 
 
@@ -276,7 +282,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
 
-          {/* STOCK ALERTS (Swapped in here per your request) */}
+          {/* STOCK ALERTS */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col lg:col-span-1 h-[22rem]">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -346,7 +352,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
 
-          {/* LIGHT MODE AI HUB */}
+          {/* LIGHT MODE AI Hub */}
           <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40 p-6 flex flex-col lg:col-span-1 h-[20rem]">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-indigo-500">{Icons.Sparkles}</span>

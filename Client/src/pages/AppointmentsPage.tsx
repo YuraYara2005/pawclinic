@@ -80,9 +80,9 @@ export default function AppointmentsPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [apptRes, petsRes, ownersRes] = await Promise.all([
-        fetch("http://localhost:5000/api/appointments", { headers }),
-        fetch("http://localhost:5000/api/pets", { headers }),
-        fetch("http://localhost:5000/api/owners", { headers })
+        fetch("`${import.meta.env.VITE_API_URL}/api/appointments", { headers }),
+        fetch("`${import.meta.env.VITE_API_URL}/api/pets", { headers }),
+        fetch("`${import.meta.env.VITE_API_URL}/api/owners", { headers })
       ]);
 
       const apptData = await apptRes.json();
@@ -180,7 +180,7 @@ export default function AppointmentsPage() {
     };
 
     const targetId = editing?.id || editing?._id;
-    const url = editing ? `http://localhost:5000/api/appointments/${targetId}` : "http://localhost:5000/api/appointments";
+    const url = editing ? `${import.meta.env.VITE_API_URL}/api/appointments/${targetId}` : "`${import.meta.env.VITE_API_URL}/api/appointments";
     const method = editing ? "PUT" : "POST";
 
     try {
@@ -227,7 +227,7 @@ export default function AppointmentsPage() {
         notes: appt.notes
       };
 
-      const res = await fetch(`http://localhost:5000/api/appointments/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -246,7 +246,7 @@ export default function AppointmentsPage() {
     if (!window.confirm("Are you sure you want to delete this appointment?")) return;
     
     try { 
-      const res = await fetch(`http://localhost:5000/api/appointments/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

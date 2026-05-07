@@ -17,12 +17,16 @@ interface Pet {
 interface MedicalRecord {
   id?: number;
   _id?: string | number;
-  petId: string | number;
-  vetId: string | number;
-  chiefComplaint: string;
+  petId?: string | number;
+  pet_id?: string | number;
+  vetId?: string | number;
+  vet_id?: string | number;
+  chiefComplaint?: string;
+  chief_complaint?: string;
   diagnosis: string;
   treatment: string;
-  visitDate: string;
+  visitDate?: string;
+  visit_date?: string;
   notes?: string;
 }
 
@@ -50,12 +54,11 @@ const emptyForm: RecordFormData = {
 // 2. MAIN COMPONENT
 // ==========================================
 export default function MedicalRecordsPage() {
-  // Data State
   const [pets, setPets] = useState<Pet[]>([]);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDeletingId, setIsDeletingId] = useState<string | number | null>(null);
   
-  // UI State
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editing, setEditing] = useState<MedicalRecord | null>(null);
   const [form, setForm] = useState<RecordFormData>(emptyForm);
@@ -63,7 +66,6 @@ export default function MedicalRecordsPage() {
 
   const token = localStorage.getItem("clinic_auth_token");
 
-  // Create a map for quick pet name lookups
   const petMap = Object.fromEntries(pets.map((p) => [p.id || p._id, p]));
 
   // ==========================================
@@ -72,20 +74,27 @@ export default function MedicalRecordsPage() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      const headers = { Authorization: `Bearer ${token}` };
       
-      // 1. Fetch Real Pets from MySQL
-      const petsRes = await fetch("http://localhost:5000/api/pets", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Fetch both Pets (for the dropdown/names) and the actual Medical Records
+      const [petsRes, recordsRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/pets`, { headers }),
+        // Assuming you created a medical-records route in your backend!
+        fetch(`${import.meta.env.VITE_API_URL}/api/medical-records`, { headers }).catch(() => null) 
+      ]);
+
       const petsData = await petsRes.json();
       if (petsData.success) {
         setPets(petsData.data);
       }
 
-      // 2. Mock Medical Records (Until we build the backend route!)
-      setRecords([
-        { _id: 1, petId: petsData.data[0]?.id || 1, vetId: 1, chiefComplaint: "Limping", diagnosis: "Sprained paw", treatment: "Rest, pain meds", visitDate: "2026-04-10" }
-      ]);
+      // If the backend route doesn't exist yet, it won't crash the page
+      if (recordsRes) {
+        const recordsData = await recordsRes.json();
+        if (recordsData.success) setRecords(recordsData.data);
+      } else {
+        setRecords([]); // Fallback if backend route isn't built yet
+      }
 
     } catch (error) {
       toast.error("Failed to connect to the database");
@@ -96,7 +105,7 @@ export default function MedicalRecordsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   // ==========================================
   // 4. ACTION HANDLERS
@@ -110,12 +119,12 @@ export default function MedicalRecordsPage() {
   const openEdit = (rec: MedicalRecord) => {
     setEditing(rec);
     setForm({
-      petId: rec.petId,
+      petId: rec.petId || rec.pet_id || "",
       customPet: "",
-      chiefComplaint: rec.chiefComplaint,
+      chiefComplaint: rec.chiefComplaint || rec.chief_complaint || "",
       diagnosis: rec.diagnosis,
       treatment: rec.treatment,
-      visitDate: rec.visitDate,
+      visitDate: rec.visitDate || rec.visit_date ? new Date(rec.visitDate || rec.visit_date as string).toISOString().split('T')[0] : "",
       notes: rec.notes || "",
     });
     setShowModal(true);
@@ -130,13 +139,40 @@ export default function MedicalRecordsPage() {
 
     setIsSaving(true);
 
+    // 🚨 Translating React state to exact MySQL snake_case payload
+    const payload = {
+      pet_id: Number(form.petId),
+      chief_complaint: form.chiefComplaint,
+      diagnosis: form.diagnosis,
+      treatment: form.treatment,
+      visit_date: form.visitDate,
+      notes: form.notes || undefined,
+    };
+
+    const recordId = editing?.id || editing?._id;
+    const url = editing ? `${import.meta.env.VITE_API_URL}/api/medical-records/${recordId}` : `${import.meta.env.VITE_API_URL}/api/medical-records`;
+    const method = editing ? "PUT" : "POST";
+
     try {
-      // Simulating network request for now
-      await new Promise(resolve => setTimeout(resolve, 800));
-      toast.success(editing ? "Record updated!" : "New medical record created!");
-      setShowModal(false);
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Record ${editing ? "updated" : "added"} successfully!`);
+        fetchData();
+        setShowModal(false);
+      } else {
+        toast.error(data.message || "Failed to save record");
+      }
     } catch (err: any) {
-      toast.error(err.message || "Failed to save record");
+      toast.error("Network error. Is the server running?");
     } finally {
       setIsSaving(false);
     }
@@ -146,11 +182,24 @@ export default function MedicalRecordsPage() {
     if (!id) return;
     if (!window.confirm("Are you sure you want to delete this medical record?")) return;
 
+    setIsDeletingId(id);
     try {
-      toast.success("Record deleted (Simulated)");
-      setRecords(records.filter(r => (r.id || r._id) !== id));
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/medical-records/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Record deleted"); 
+        fetchData(); 
+      } else {
+        toast.error(data.message || "Failed to delete record");
+      }
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error("Network error.");
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -165,7 +214,7 @@ export default function MedicalRecordsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Medical Records 🏥</h1>
           <p className="text-gray-500 mt-1">
-            {isLoading ? "Loading records..." : `${records.length} clinical records found`}
+            {isLoading ? "Syncing archives..." : `${records.length} clinical records found`}
           </p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all shadow-sm active:scale-95">
@@ -176,14 +225,21 @@ export default function MedicalRecordsPage() {
       {/* Main Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4" />
-            <p className="font-medium">Loading patient data...</p>
+          // 🚀 ENTERPRISE SKELETON LOADER
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-4 animate-pulse">
+                <div className="h-10 bg-gray-200 rounded w-1/5"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/5"></div>
+              </div>
+            ))}
           </div>
         ) : records.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-3">🩺</div>
-            <p className="font-medium">No medical records found</p>
+            <p className="font-medium">No medical records found in database.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -200,7 +256,8 @@ export default function MedicalRecordsPage() {
               <tbody className="divide-y divide-gray-50">
                 {records.map((rec) => {
                   const recordId = rec.id || rec._id;
-                  const pet = petMap[rec.petId];
+                  const petId = String(rec.petId || rec.pet_id);
+                  const pet = petMap[petId];
 
                   return (
                     <tr key={recordId} className="hover:bg-gray-50/50 transition-colors group">
@@ -210,20 +267,22 @@ export default function MedicalRecordsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-medium text-gray-800">{rec.diagnosis}</span>
-                        <span className="block text-xs text-gray-500 truncate max-w-xs mt-0.5" title={rec.chiefComplaint}>
-                          Issue: {rec.chiefComplaint}
+                        <span className="block text-xs text-gray-500 truncate max-w-xs mt-0.5" title={rec.chiefComplaint || rec.chief_complaint}>
+                          Issue: {rec.chiefComplaint || rec.chief_complaint}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs" title={rec.treatment}>
                         {rec.treatment}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(rec.visitDate).toLocaleDateString()}
+                        {rec.visitDate || rec.visit_date ? new Date((rec.visitDate || rec.visit_date) as string).toLocaleDateString() : "—"}
                       </td>
-                      <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => openEdit(rec)} className="px-3 py-1.5 text-xs bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition font-medium">Edit</button>
-                          <button onClick={() => handleDelete(recordId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">Delete</button>
+                          <button disabled={isDeletingId === recordId} onClick={() => handleDelete(recordId)} className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium disabled:opacity-50">
+                            {isDeletingId === recordId ? "..." : "Delete"}
+                          </button>
                         </div>
                       </td>
                     </tr>
