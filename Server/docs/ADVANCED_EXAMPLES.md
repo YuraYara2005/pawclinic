@@ -15,7 +15,7 @@ A pet owner rushes in with an emergency. Staff needs to quickly access the pet's
 #!/bin/bash
 # emergency-visit.sh - Handle emergency visit workflow
 
-BASE_URL="http://localhost:5000/api"
+BASE_URL="`${import.meta.env.VITE_API_URL}/api"
 TOKEN="$1"  # Passed as argument
 
 # Function to search and display owner/pet info
@@ -105,7 +105,7 @@ Clinic manager wants to generate a report of all appointments for the day with p
 #!/bin/bash
 # daily-report.sh - Generate daily clinic report
 
-BASE_URL="http://localhost:5000/api"
+BASE_URL="`${import.meta.env.VITE_API_URL}/api"
 TOKEN="$1"
 
 generate_daily_report() {
@@ -180,7 +180,7 @@ Veterinarian needs complete medical history for a specific pet including owner c
 const axios = require('axios');
 
 async function getPetMedicalHistory(petId, token) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
 
   try {
     // 1. Get pet details
@@ -317,7 +317,7 @@ const emailService = nodemailer.createTransport({
 });
 
 async function sendAppointmentReminders(token) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowDate = tomorrow.toISOString().split('T')[0];
@@ -403,7 +403,7 @@ Admin wants to see statistics about pets, appointments, and clinic operations.
 const axios = require('axios');
 
 async function getClinicStatistics(token) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
 
   try {
     // Fetch data in parallel
@@ -576,7 +576,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 
 async function importOwnersFromCSV(filePath, token) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
   const owners = [];
 
   return new Promise((resolve, reject) => {
@@ -611,7 +611,7 @@ async function importOwnersFromCSV(filePath, token) {
 }
 
 async function importPetsFromCSV(filePath, token, ownerMap) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
   const pets = [];
 
   return new Promise((resolve, reject) => {
@@ -711,7 +711,7 @@ Handle various error scenarios gracefully.
 const axios = require('axios');
 
 async function createPetWithErrorHandling(petData, token) {
-  const baseURL = 'http://localhost:5000/api';
+  const baseURL = '`${import.meta.env.VITE_API_URL}/api';
 
   try {
     const response = await axios.post(

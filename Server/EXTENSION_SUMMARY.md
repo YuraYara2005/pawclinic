@@ -176,7 +176,7 @@ chmod +x tests/test-owners-pets.sh
 
 **Create Owner:**
 ```bash
-curl -X POST http://localhost:5000/api/owners \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -189,7 +189,7 @@ curl -X POST http://localhost:5000/api/owners \
 
 **Create Pet:**
 ```bash
-curl -X POST http://localhost:5000/api/pets \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -299,7 +299,7 @@ Available Routes:
 
 ### 3. Get Token
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 ```
@@ -307,11 +307,11 @@ curl -X POST http://localhost:5000/api/auth/login \
 ### 4. Test New Endpoints
 ```bash
 # Get all owners
-curl http://localhost:5000/api/owners \
+curl `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Get all pets
-curl http://localhost:5000/api/pets \
+curl `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

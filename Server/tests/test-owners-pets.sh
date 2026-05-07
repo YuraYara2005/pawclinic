@@ -3,7 +3,7 @@
 # PawClinic - Owners & Pets Module Test Script
 # Tests all new endpoints for Owners and Pets modules
 
-BASE_URL="http://localhost:5000/api"
+BASE_URL="`${import.meta.env.VITE_API_URL}/api"
 echo "================================================"
 echo "  PawClinic - Owners & Pets Module Tests"
 echo "================================================"

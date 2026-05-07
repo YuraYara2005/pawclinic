@@ -358,7 +358,7 @@ npm audit
 mysql -u pawclinic_user -p pawclinic -e "SELECT 1"
 
 # 4. Test API endpoints
-curl http://localhost:5000/health
+curl `${import.meta.env.VITE_API_URL}/health
 
 # 5. Check environment variables
 echo $JWT_SECRET  # Should be set

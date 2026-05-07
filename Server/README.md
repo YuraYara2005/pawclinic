@@ -180,13 +180,13 @@ npm start
 npm run dev
 ```
 
-Server will start on `http://localhost:5000`
+Server will start on ``${import.meta.env.VITE_API_URL}`
 
 ## 📚 API Documentation
 
 ### Base URL
 ```
-http://localhost:5000/api
+`${import.meta.env.VITE_API_URL}/api
 ```
 
 ### Authentication
@@ -386,14 +386,14 @@ pawclinic-backend/
 
 ### Login
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 ```
 
 ### Get Inventory (with auth)
 ```bash
-curl -X GET http://localhost:5000/api/inventory \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 

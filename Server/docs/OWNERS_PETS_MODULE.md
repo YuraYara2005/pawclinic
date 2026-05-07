@@ -366,13 +366,13 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ### Test Owner Creation
 ```bash
 # Login first to get token
-TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
+TOKEN=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}' \
   | jq -r '.data.token')
 
 # Create owner
-curl -X POST http://localhost:5000/api/owners \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -386,7 +386,7 @@ curl -X POST http://localhost:5000/api/owners \
 ### Test Pet Creation
 ```bash
 # Create pet (requires valid owner_id)
-curl -X POST http://localhost:5000/api/pets \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -401,19 +401,19 @@ curl -X POST http://localhost:5000/api/pets \
 
 ### Test Get All Owners
 ```bash
-curl -X GET http://localhost:5000/api/owners \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Test Get All Pets
 ```bash
-curl -X GET http://localhost:5000/api/pets \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Test Update Owner
 ```bash
-curl -X PUT http://localhost:5000/api/owners/1 \
+curl -X PUT `${import.meta.env.VITE_API_URL}/api/owners/1 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -426,7 +426,7 @@ curl -X PUT http://localhost:5000/api/owners/1 \
 
 ### Test Delete Pet
 ```bash
-curl -X DELETE http://localhost:5000/api/pets/6 \
+curl -X DELETE `${import.meta.env.VITE_API_URL}/api/pets/6 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -502,7 +502,7 @@ npm start
 
 ### 3. Get JWT Token
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 ```

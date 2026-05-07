@@ -73,6 +73,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/owners', ownersRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/medical-records', require('./routes/medicalRecordRoutes'));
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {

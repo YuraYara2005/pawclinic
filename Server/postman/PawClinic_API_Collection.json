@@ -17,7 +17,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:5000/api",
+      "value": "`${import.meta.env.VITE_API_URL}/api",
       "type": "string"
     },
     {
@@ -310,7 +310,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:5000/health",
+              "raw": "`${import.meta.env.VITE_API_URL}/health",
               "protocol": "http",
               "host": ["localhost"],
               "port": "5000",

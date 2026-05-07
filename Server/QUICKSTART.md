@@ -90,7 +90,7 @@ Available Routes:
 
 ### Test Health Endpoint
 ```bash
-curl http://localhost:5000/health
+curl `${import.meta.env.VITE_API_URL}/health
 ```
 
 Expected response:
@@ -104,7 +104,7 @@ Expected response:
 
 ### Test Login
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 ```
@@ -129,7 +129,7 @@ Expected response:
 ### Test Protected Endpoint
 ```bash
 # Replace YOUR_TOKEN with the token from login response
-curl -X GET http://localhost:5000/api/inventory \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -164,7 +164,7 @@ The database schema includes sample data:
 
 2. **Import Postman Collection**
    - Import `postman/PawClinic_API_Collection.json`
-   - Set `base_url` to `http://localhost:5000/api`
+   - Set `base_url` to ``${import.meta.env.VITE_API_URL}/api`
    - Use "Login - Admin" to get JWT token
 
 3. **Customize Configuration**

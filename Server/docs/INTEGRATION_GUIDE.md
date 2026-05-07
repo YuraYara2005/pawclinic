@@ -386,13 +386,13 @@ router.get('/owners', protect, getAllOwners);
 
 ```bash
 # 1. LOGIN
-TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
+TOKEN=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}' \
   | jq -r '.data.token')
 
 # 2. CREATE OWNER
-OWNER=$(curl -s -X POST http://localhost:5000/api/owners \
+OWNER=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -404,7 +404,7 @@ OWNER=$(curl -s -X POST http://localhost:5000/api/owners \
 OWNER_ID=$(echo $OWNER | jq '.data.id')
 
 # 3. CREATE PET
-PET=$(curl -s -X POST http://localhost:5000/api/pets \
+PET=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -418,7 +418,7 @@ PET=$(curl -s -X POST http://localhost:5000/api/pets \
 PET_ID=$(echo $PET | jq '.data.id')
 
 # 4. SCHEDULE APPOINTMENT
-APPOINTMENT=$(curl -s -X POST http://localhost:5000/api/appointments \
+APPOINTMENT=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
@@ -437,7 +437,7 @@ echo "  Pet ID: $PET_ID"
 echo "  Appointment ID: $APPT_ID"
 
 # 6. RETRIEVE APPOINTMENT (shows all relationships)
-curl -s -X GET http://localhost:5000/api/appointments/$APPT_ID \
+curl -s -X GET `${import.meta.env.VITE_API_URL}/api/appointments/$APPT_ID \
   -H "Authorization: Bearer $TOKEN" | jq '.'
 
 # Expected response shows:

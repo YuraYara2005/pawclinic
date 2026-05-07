@@ -100,7 +100,7 @@ mysql -u root -p pawclinic -e "
 "
 
 # Test login
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 ```
@@ -121,7 +121,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ```bash
 # Get new token
-TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
+TOKEN=$(curl -s -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}' \
   | jq -r '.data.token')
@@ -176,7 +176,7 @@ npm start
 
 ```bash
 # Verify token is included in header
-curl -X GET http://localhost:5000/api/owners \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Check token format
@@ -204,7 +204,7 @@ echo YOUR_TOKEN | jq -R 'split(".")[1] | @base64d | fromjson'
 cat middleware/validationMiddleware.js | grep -A 10 "ownerValidation"
 
 // Send request with required fields
-curl -X POST http://localhost:5000/api/owners \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -266,7 +266,7 @@ Error: Cannot add or update a child row: a foreign key constraint fails
 mysql -u root -p pawclinic -e "SELECT id FROM owners WHERE id=1"
 
 # If owner doesn't exist, create it first
-curl -X POST http://localhost:5000/api/owners \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -275,7 +275,7 @@ curl -X POST http://localhost:5000/api/owners \
   }'
 
 # Now create pet with that owner_id
-curl -X POST http://localhost:5000/api/pets \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/pets \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -303,7 +303,7 @@ mysql -u root -p pawclinic -e "
 "
 
 # If updating, use a different email or update existing user
-curl -X PUT http://localhost:5000/api/owners/1 \
+curl -X PUT `${import.meta.env.VITE_API_URL}/api/owners/1 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -490,7 +490,7 @@ const [rows] = await pool.query(
 )
 
 # Test with injection attempt
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com\" OR \"1\"=\"1",
@@ -604,15 +604,15 @@ After fixing issues, verify:
 npm start
 
 # 2. Health check responds
-curl http://localhost:5000/health
+curl `${import.meta.env.VITE_API_URL}/health
 
 # 3. Login works
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pawclinic.com","password":"admin123"}'
 
 # 4. Endpoints work
-curl -X GET http://localhost:5000/api/owners \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/owners \
   -H "Authorization: Bearer $TOKEN"
 
 # 5. Database stable
@@ -622,7 +622,7 @@ mysql -u pawclinic_user -p pawclinic -e "SELECT COUNT(*) FROM owners"
 pm2 logs | grep -i error | head -20
 
 # 7. Response times normal
-curl -w "\nTime: %{time_total}s\n" http://localhost:5000/health
+curl -w "\nTime: %{time_total}s\n" `${import.meta.env.VITE_API_URL}/health
 ```
 
 ---
@@ -704,7 +704,7 @@ watch -n 1 'pm2 status && echo "---" && free -h && df -h'
 
 # Terminal 3: Make requests
 while true; do
-  curl http://localhost:5000/api/owners -H "Authorization: Bearer $TOKEN"
+  curl `${import.meta.env.VITE_API_URL}/api/owners -H "Authorization: Bearer $TOKEN"
   sleep 5
 done
 ```

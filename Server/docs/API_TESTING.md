@@ -1,7 +1,7 @@
 # PawClinic API Testing Guide
 
 ## Prerequisites
-- Server running on http://localhost:5000
+- Server running on `${import.meta.env.VITE_API_URL}
 - Database populated with sample data
 - Tool: cURL, Postman, or any HTTP client
 
@@ -15,7 +15,7 @@
 
 ### Test 1.1: Login with Valid Credentials
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@pawclinic.com",
@@ -42,7 +42,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ### Test 1.2: Login with Invalid Credentials
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@pawclinic.com",
@@ -61,7 +61,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 ### Test 1.3: Get Current User
 ```bash
 # Replace YOUR_TOKEN with actual JWT from login
-curl -X GET http://localhost:5000/api/auth/me \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/auth/me \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -81,7 +81,7 @@ curl -X GET http://localhost:5000/api/auth/me \
 
 ### Test 1.4: Access Protected Route Without Token
 ```bash
-curl -X GET http://localhost:5000/api/inventory
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory
 ```
 
 **Expected Response (401):**
@@ -98,7 +98,7 @@ curl -X GET http://localhost:5000/api/inventory
 
 ### Test 2.1: Get All Inventory Items
 ```bash
-curl -X GET http://localhost:5000/api/inventory \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -125,13 +125,13 @@ curl -X GET http://localhost:5000/api/inventory \
 
 ### Test 2.2: Get Single Inventory Item
 ```bash
-curl -X GET http://localhost:5000/api/inventory/1 \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Test 2.3: Create Inventory Item (Admin Only)
 ```bash
-curl -X POST http://localhost:5000/api/inventory \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -167,7 +167,7 @@ curl -X POST http://localhost:5000/api/inventory \
 
 ### Test 2.4: Create Inventory Item (Staff - Should Fail)
 ```bash
-curl -X POST http://localhost:5000/api/inventory \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_STAFF_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -190,7 +190,7 @@ curl -X POST http://localhost:5000/api/inventory \
 
 ### Test 2.5: Update Inventory Item
 ```bash
-curl -X PUT http://localhost:5000/api/inventory/1 \
+curl -X PUT `${import.meta.env.VITE_API_URL}/api/inventory/1 \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -207,7 +207,7 @@ curl -X PUT http://localhost:5000/api/inventory/1 \
 
 ### Test 2.6: Delete Inventory Item
 ```bash
-curl -X DELETE http://localhost:5000/api/inventory/9 \
+curl -X DELETE `${import.meta.env.VITE_API_URL}/api/inventory/9 \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 ```
 
@@ -221,7 +221,7 @@ curl -X DELETE http://localhost:5000/api/inventory/9 \
 
 ### Test 2.7: Validation Error - Missing Required Fields
 ```bash
-curl -X POST http://localhost:5000/api/inventory \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -240,7 +240,7 @@ curl -X POST http://localhost:5000/api/inventory \
 
 ### Test 2.8: Validation Error - Invalid Data Types
 ```bash
-curl -X POST http://localhost:5000/api/inventory \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -267,7 +267,7 @@ curl -X POST http://localhost:5000/api/inventory \
 
 ### Test 3.1: Get All Appointments
 ```bash
-curl -X GET http://localhost:5000/api/appointments \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -296,13 +296,13 @@ curl -X GET http://localhost:5000/api/appointments \
 
 ### Test 3.2: Get Single Appointment
 ```bash
-curl -X GET http://localhost:5000/api/appointments/1 \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/appointments/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Test 3.3: Create Appointment
 ```bash
-curl -X POST http://localhost:5000/api/appointments \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -339,7 +339,7 @@ curl -X POST http://localhost:5000/api/appointments \
 
 ### Test 3.4: Create Appointment - Pet Doesn't Belong to Owner
 ```bash
-curl -X POST http://localhost:5000/api/appointments \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -362,7 +362,7 @@ curl -X POST http://localhost:5000/api/appointments \
 
 ### Test 3.5: Update Appointment
 ```bash
-curl -X PUT http://localhost:5000/api/appointments/1 \
+curl -X PUT `${import.meta.env.VITE_API_URL}/api/appointments/1 \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -378,13 +378,13 @@ curl -X PUT http://localhost:5000/api/appointments/1 \
 
 ### Test 3.6: Delete Appointment
 ```bash
-curl -X DELETE http://localhost:5000/api/appointments/6 \
+curl -X DELETE `${import.meta.env.VITE_API_URL}/api/appointments/6 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Test 3.7: Validation Error - Invalid Date Format
 ```bash
-curl -X POST http://localhost:5000/api/appointments \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -406,7 +406,7 @@ curl -X POST http://localhost:5000/api/appointments \
 
 ### Test 3.8: Validation Error - Invalid Time Format
 ```bash
-curl -X POST http://localhost:5000/api/appointments \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/appointments \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -432,7 +432,7 @@ curl -X POST http://localhost:5000/api/appointments \
 
 ### Test 4.1: 404 - Route Not Found
 ```bash
-curl -X GET http://localhost:5000/api/notfound \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/notfound \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -447,7 +447,7 @@ curl -X GET http://localhost:5000/api/notfound \
 ### Test 4.2: Token Expiration
 After token expires (default 1 day):
 ```bash
-curl -X GET http://localhost:5000/api/inventory \
+curl -X GET `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer EXPIRED_TOKEN"
 ```
 
@@ -463,7 +463,7 @@ curl -X GET http://localhost:5000/api/inventory \
 Make more than 100 requests within 15 minutes:
 ```bash
 for i in {1..101}; do
-  curl -X GET http://localhost:5000/api/auth/login
+  curl -X GET `${import.meta.env.VITE_API_URL}/api/auth/login
 done
 ```
 
@@ -481,7 +481,7 @@ done
 
 ### Test 5.1: SQL Injection Prevention
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@pawclinic.com OR 1=1--",
@@ -494,7 +494,7 @@ Should not bypass authentication
 
 ### Test 5.2: XSS Prevention
 ```bash
-curl -X POST http://localhost:5000/api/inventory \
+curl -X POST `${import.meta.env.VITE_API_URL}/api/inventory \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -533,7 +533,7 @@ Save as `test-api.sh`:
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:5000/api"
+BASE_URL="`${import.meta.env.VITE_API_URL}/api"
 
 # Login and get token
 echo "Testing login..."
