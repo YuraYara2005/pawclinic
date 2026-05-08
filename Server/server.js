@@ -14,7 +14,6 @@ const ownersRoutes = require('./routes/ownersRoutes');
 const petsRoutes = require('./routes/petsRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 
-
 // Initialize Express app
 const app = express();
 
@@ -25,16 +24,16 @@ const app = express();
 // Set secure HTTP headers
 app.use(helmet());
 
-// Enable CORS with configuration
+// Enable CORS (Updated to allow Vercel frontend)
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  origin: '*', // Allows all origins for now so your frontend won't get blocked
   credentials: true
 }));
 
 // Rate limiting to prevent brute force attacks
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000000000, // 15 minutes default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000000, // 100 requests per window
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, 
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, 
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later'
@@ -61,7 +60,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'PawClinic API is running',
+    message: 'PawClinic API is running on Vercel Serverless!',
     timestamp: new Date().toISOString()
   });
 });
@@ -90,62 +89,26 @@ app.use('*', (req, res) => {
 app.use(errorMiddleware);
 
 // ============================================
-// SERVER INITIALIZATION
+// SERVER INITIALIZATION (Adapted for Vercel)
 // ============================================
 
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-  try {
-    // Test database connection
-    await testConnection();
+// Only run the continuous listener if we are NOT on Vercel
+if (process.env.NODE_ENV !== 'production') {
+  const startServer = async () => {
+    try {
+      await testConnection();
+      app.listen(PORT, () => {
+        console.log(`🐾 PawClinic Local Server running on port ${PORT}`);
+      });
+    } catch (error) {
+      console.error('Failed to start server:', error.message);
+      process.exit(1);
+    }
+  };
+  startServer();
+}
 
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`
-╔═══════════════════════════════════════════════╗
-║   🐾 PawClinic Veterinary Management System   ║
-╚═══════════════════════════════════════════════╝
-
-Server running in ${process.env.NODE_ENV || 'development'} mode
-Port: ${PORT}
-Database: ${process.env.DB_NAME}
-
-Available Routes:
-  GET    /health
-  POST   /api/auth/login
-  GET    /api/auth/me
-  GET    /api/inventory
-  POST   /api/inventory (admin)
-  PUT    /api/inventory/:id (admin)
-  DELETE /api/inventory/:id (admin)
-  GET    /api/appointments
-  POST   /api/appointments
-  PUT    /api/appointments/:id
-  DELETE /api/appointments/:id
-  GET    /api/owners
-  POST   /api/owners
-  PUT    /api/owners/:id
-  DELETE /api/owners/:id
-  GET    /api/pets
-  POST   /api/pets
-  PUT    /api/pets/:id
-  DELETE /api/pets/:id
-
-Press CTRL+C to stop
-      `);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error.message);
-    process.exit(1);
-  }
-};
-
-startServer();
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err.message);
-  console.error('Shutting down server...');
-  process.exit(1);
-});
+// 🚨 CRITICAL FOR VERCEL: Export the app!
+module.exports = app;
