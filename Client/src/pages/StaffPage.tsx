@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import type {FormEvent} from "react";
 import { toast } from "sonner";
 
@@ -29,7 +29,7 @@ export default function StaffPage() {
   const [adminPassword, setAdminPassword] = useState<string>("");
 
   // Data State
-  const [staffList, setStaffList] = useState<Staff[]>([
+  const [staffList] = useState<Staff[]>([
     { _id: 1, name: "Dr. Yara (Admin)", role: "admin", email: "admin2@clinic.com" },
     { _id: 2, name: "Staff User", role: "staff", email: "staff@clinic.com" }
   ]);

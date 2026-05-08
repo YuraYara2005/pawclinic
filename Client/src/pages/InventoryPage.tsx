@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import  { useState, useMemo, useEffect } from "react";
 import type { FormEvent } from "react";
 import { toast } from "sonner";
 import Modal from "../components/Modal"; 

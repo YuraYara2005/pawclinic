@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import  { useState, useEffect, useMemo } from "react";
 import type { FormEvent } from "react";
 import { toast } from "sonner";
 import Modal from "../components/Modal";
-import Badge from "../components/Badge";
 
 // ==========================================
 // 1. TYPESCRIPT INTERFACES
