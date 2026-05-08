@@ -1,4 +1,3 @@
-import React from "react";
 import { SignOutButton } from "../SignOutButton";
 
 const baseNavItems = [

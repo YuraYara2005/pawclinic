@@ -1,5 +1,3 @@
-import React from "react";
-
 const variants: Record<string, string> = {
   scheduled: "bg-sky-100 text-sky-600",
   completed: "bg-mint-100 text-primary",
