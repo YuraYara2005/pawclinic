@@ -1,4 +1,6 @@
-const variants = {
+import React from "react";
+
+const variants: Record<string, string> = {
   scheduled: "bg-sky-100 text-sky-600",
   completed: "bg-mint-100 text-primary",
   cancelled: "bg-rose-100 text-rose-500",
@@ -13,9 +15,15 @@ const variants = {
   ok: "bg-mint-100 text-primary",
 };
 
-export default function Badge({ status }) {
+interface BadgeProps {
+  status: string;
+}
+
+export default function Badge({ status }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${variants[status] ?? "bg-gray-100 text-gray-500"}`}>
+    <span 
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${variants[status] ?? "bg-gray-100 text-gray-500"}`}
+    >
       {status}
     </span>
   );

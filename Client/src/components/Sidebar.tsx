@@ -1,3 +1,4 @@
+import React from "react";
 import { SignOutButton } from "../SignOutButton";
 
 const baseNavItems = [
@@ -10,13 +11,27 @@ const baseNavItems = [
   { id: "inventory", label: "Inventory", icon: "📦" },
 ];
 
-const roleColors = {
+// Tell TypeScript this object holds string keys and string values
+const roleColors: Record<string, string> = {
   admin: "bg-rose-100 text-rose-500",
   vet: "bg-mint-100 text-primary",
   receptionist: "bg-beige-100 text-accent",
 };
 
-export default function Sidebar({ currentPage, onNavigate, profile }) {
+// Define the shape of the user profile
+interface UserProfile {
+  name?: string;
+  role?: string;
+}
+
+// Define the exact props this Sidebar accepts
+interface SidebarProps {
+  currentPage: string;
+  onNavigate: (pageId: string) => void;
+  profile: UserProfile | null;
+}
+
+export default function Sidebar({ currentPage, onNavigate, profile }: SidebarProps) {
   // ✅ ONLY ADD THIS — nothing else changed
   const navItems = [
     ...baseNavItems,
@@ -70,8 +85,9 @@ export default function Sidebar({ currentPage, onNavigate, profile }) {
 
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                roleColors[profile?.role] ??
-                "bg-gray-100 text-gray-500"
+                profile?.role && roleColors[profile.role]
+                  ? roleColors[profile.role]
+                  : "bg-gray-100 text-gray-500"
               }`}
             >
               {profile?.role}
