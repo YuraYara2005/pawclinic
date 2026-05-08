@@ -1,5 +1,3 @@
-import React from "react";
-
 export function SignOutButton() {
   // Check if the user is authenticated by looking for our token
   const isAuthenticated = !!localStorage.getItem("clinic_auth_token");
